@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="hu">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Admin dashboard – Zöld Lovag</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 16px; }
+    .top { display:flex; justify-content:space-between; align-items:center; gap: 12px; flex-wrap:wrap; }
+    .msg { padding:10px 12px; border:1px solid #ccc; border-radius:8px; margin: 10px 0; }
+    .box { border:1px solid #ccc; border-radius:8px; padding:12px; margin: 12px 0; }
+    .row { display:flex; gap:12px; flex-wrap:wrap; align-items:end; }
+    .field { display:flex; flex-direction:column; gap:6px; min-width: 180px; }
+    input, select { padding:10px; border:1px solid #ccc; border-radius:8px; }
+    button { padding:10px 14px; border:0; border-radius:8px; cursor:pointer; }
+    table { width:100%; border-collapse:collapse; min-width: 1100px; }
+    th, td { text-align:left; padding:8px; border-bottom:1px solid #eee; vertical-align: top; }
+    .img { max-width: 140px; max-height: 100px; border-radius: 8px; border: 1px solid #ddd; }
+    .nowrap { white-space:nowrap; }
+  </style>
+</head>
+<body>
+
+  <div class="top">
+    <h1>Admin dashboard</h1>
+    <div>
+      <span>Belépve: <b>{{ admin_nev }}</b></span>
+      &nbsp; | &nbsp;
+      <button type="button" id="btn-modlog">Módosítások megtekintése</button>
+      <a href="/admin/logout"><button type="button">Kijelentkezés</button></a>
+    </div>
+  </div>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, msg in messages %}
+        <div class="msg">{{ msg }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <div class="box">
+    <h2>Szűrés</h2>
+    <form method="GET" action="/admin/dashboard">
+      <div class="row">
+        <div class="field">
+          <label>Státusz</label>
+          <select name="statusz">
+            <option value="" {% if not filters.statusz %}selected{% endif %}>Összes</option>
+            <option value="beérkezett" {% if filters.statusz=="beérkezett" %}selected{% endif %}>beérkezett</option>
+            <option value="folyamatban" {% if filters.statusz=="folyamatban" %}selected{% endif %}>folyamatban</option>
+            <option value="lezárt" {% if filters.statusz=="lezárt" %}selected{% endif %}>lezárt</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Időpont - tól</label>
+          <input type="date" name="date_from" value="{{ filters.date_from }}">
+        </div>
+
+        <div class="field">
+          <label>Időpont - ig</label>
+          <input type="date" name="date_to" value="{{ filters.date_to }}">
+        </div>
+
+        <div class="field" style="min-width: 260px;">
+          <label>Helyszín</label>
+          <input type="text" name="hely" placeholder="cím részlet VAGY lat,lng" value="{{ filters.hely }}">
+        </div>
+
+        <button type="submit">Szűrés</button>
+        <a href="/admin/dashboard"><button type="button">Reset</button></a>
+      </div>
+    </form>
+  </div>
+
+  <div style="overflow:auto; border:1px solid #ccc; border-radius:8px;">
+    <table>
+      <thead>
+        <tr>
+          <th class="nowrap">ID</th>
+          <th class="nowrap">Időpont</th>
+          <th>Helyszín</th>
+          <th>Kép</th>
+          <th>Megjegyzés</th>
+          <th class="nowrap">Státusz</th>
+          <th class="nowrap">Prioritás</th>
+          <th class="nowrap">Típus</th>
+          <th class="nowrap">Mennyiség</th>
+          <th>Művelet</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for b in bejelentesek %}
+          <tr>
+            <td class="nowrap">{{ b.bejelentesID }}</td>
+            <td class="nowrap">{{ b.datum_ido }}</td>
+
+            <td>
+              {% if b.cim %}
+                <div><b>Cím:</b> {{ b.cim }}</div>
+              {% endif %}
+              {% if b.koord_szel and b.koord_hossz %}
+                <div><b>Koordináta:</b> {{ b.koord_szel }}, {{ b.koord_hossz }}</div>
+              {% endif %}
+            </td>
+
+            <td>
+              {% if b.foto_url %}
+                <a href="{{ b.foto_url }}" target="_blank">
+                  <img class="img" src="{{ b.foto_url }}" alt="foto">
+                </a>
+              {% else %}
+                -
+              {% endif %}
+            </td>
+
+            <td>{{ b.leiras or "-" }}</td>
+
+            <td>{{ b.statusz }}</td>
+            <td>{{ b.prioritas or "-" }}</td>
+            <td>{{ b.hulladek_tipus or "-" }}</td>
+            <td>{{ b.mennyiseg or "-" }}</td>
+
+            <td>
+              <form method="POST" action="/admin/bejelentes/{{ b.bejelentesID }}/update">
+                <div class="field">
+                  <label>Státusz</label>
+                  <select name="statusz">
+                    <option value="">(nem változik)</option>
+                    <option value="beérkezett">beérkezett</option>
+                    <option value="folyamatban">folyamatban</option>
+                    <option value="lezárt">lezárt</option>
+                  </select>
+                </div>
+
+                <div class="field">
+                  <label>Prioritás</label>
+                  <select name="prioritas">
+                    <option value="">(üres)</option>
+                    <option value="alacsony">alacsony</option>
+                    <option value="közepes">közepes</option>
+                    <option value="magas">magas</option>
+                  </select>
+                </div>
+
+                <div class="field">
+                  <label>Típus</label>
+                  <input name="hulladek_tipus" type="text" placeholder="pl. műanyag" value="{{ b.hulladek_tipus or '' }}">
+                </div>
+
+                <div class="field">
+                  <label>Mennyiség</label>
+                  <input name="mennyiseg" type="text" placeholder="pl. 3 zsák" value="{{ b.mennyiseg or '' }}">
+                </div>
+
+                <button type="submit">Mentés</button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div id="modlog" class="box" style="display:none;">
+  <h2>Módosítások</h2>
+  <div id="modlog-status" class="hint"></div>
+
+  <div style="overflow:auto; border:1px solid #ccc; border-radius:8px;">
+    <table style="width:100%; border-collapse:collapse; min-width: 900px;">
+      <thead>
+        <tr>
+          <th style="text-align:left; padding:8px; border-bottom:1px solid #ccc;">modositasID</th>
+          <th style="text-align:left; padding:8px; border-bottom:1px solid #ccc;">bejelentesID</th>
+          <th style="text-align:left; padding:8px; border-bottom:1px solid #ccc;">adminID</th>
+          <th style="text-align:left; padding:8px; border-bottom:1px solid #ccc;">datum_ido</th>
+          <th style="text-align:left; padding:8px; border-bottom:1px solid #ccc;">mezo</th>
+          <th style="text-align:left; padding:8px; border-bottom:1px solid #ccc;">regi_ertek</th>
+          <th style="text-align:left; padding:8px; border-bottom:1px solid #ccc;">uj_ertek</th>
+        </tr>
+      </thead>
+      <tbody id="modlog-body"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  const btnMod = document.getElementById("btn-modlog");
+  const boxMod = document.getElementById("modlog");
+  const stMod = document.getElementById("modlog-status");
+  const bodyMod = document.getElementById("modlog-body");
+
+  let modLoaded = false;
+
+  function esc(s) {
+    if (s === null || s === undefined) return "";
+    return String(s)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  btnMod.addEventListener("click", async () => {
+    boxMod.style.display = (boxMod.style.display === "none") ? "block" : "none";
+    if (boxMod.style.display === "none") return;
+
+    if (modLoaded) return;
+
+    stMod.textContent = "Betöltés...";
+    bodyMod.innerHTML = "";
+
+    try {
+      const res = await fetch("/admin/modositasok");
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      const data = await res.json();
+
+      if (!data.length) {
+        stMod.textContent = "Nincs módosítás.";
+        modLoaded = true;
+        return;
+      }
+
+      bodyMod.innerHTML = data.map(m => `
+        <tr>
+          <td style="padding:8px; border-bottom:1px solid #eee;">${esc(m.modositasID)}</td>
+          <td style="padding:8px; border-bottom:1px solid #eee;">${esc(m.bejelentesID)}</td>
+          <td style="padding:8px; border-bottom:1px solid #eee;">${esc(m.adminID)}</td>
+          <td style="padding:8px; border-bottom:1px solid #eee;">${esc(m.datum_ido)}</td>
+          <td style="padding:8px; border-bottom:1px solid #eee;">${esc(m.mezo)}</td>
+          <td style="padding:8px; border-bottom:1px solid #eee;">${esc(m.regi_ertek)}</td>
+          <td style="padding:8px; border-bottom:1px solid #eee;">${esc(m.uj_ertek)}</td>
+        </tr>
+      `).join("");
+
+      stMod.textContent = `Megjelenítve: ${data.length} módosítás`;
+      modLoaded = true;
+
+    } catch (e) {
+      console.error(e);
+      stMod.textContent = "Hiba a betöltésnél.";
+    }
+  });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="hu">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Admin belépés – Zöld Lovag</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 16px; max-width: 720px; }
+    .field { display:flex; flex-direction:column; gap:6px; margin: 10px 0; }
+    input { padding:10px; border:1px solid #ccc; border-radius:8px; }
+    button { padding:12px 16px; border:0; border-radius:8px; cursor:pointer; }
+    .row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+    .msg { padding:10px 12px; border:1px solid #ccc; border-radius:8px; margin: 10px 0; }
+    .hint { color:#666; font-size:0.9rem; }
+  </style>
+</head>
+<body>
+  <h1>Adminisztrátor belépés</h1>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, msg in messages %}
+        <div class="msg">{{ msg }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <form method="POST" action="/admin/login">
+    <div class="field">
+      <label for="nev">Név</label>
+      <input id="nev" name="nev" type="text" required />
+    </div>
+
+    <div class="field">
+      <label for="jelszo">Jelszó</label>
+      <input id="jelszo" name="jelszo" type="password" required />
+    </div>
+
+    <div class="row">
+      <button type="submit">Belépés</button>
+      <button type="button" id="togglePw">Jelszó megváltoztatása</button>
+    </div>
+
+    <div id="pwBox" style="display:none; margin-top: 12px;">
+      <div class="field">
+        <label for="uj_jelszo">Új jelszó</label>
+        <input id="uj_jelszo" name="uj_jelszo" type="password" />
+        <div class="hint">A módosításhoz a név + jelenlegi jelszó is kell, és a fióknak "nyitott"-nak kell lennie. A jelszónak minimum 8 karakter hosszúnak kell lennie.</div>
+      </div>
+      <button type="submit" formaction="/admin/change_password">Jelszó mentése</button>
+    </div>
+  </form>
+
+  <script>
+    const btn = document.getElementById("togglePw");
+    const box = document.getElementById("pwBox");
+    btn.addEventListener("click", () => {
+      box.style.display = (box.style.display === "none") ? "block" : "none";
+    });
+  </script>
+</body>
+</html>
