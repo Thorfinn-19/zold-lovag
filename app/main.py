@@ -7,7 +7,7 @@ from app.database import engine
 from app.models import Base
 from app.routes.public import public_bp
 from app.routes.admin import admin_bp
-
+import os
 
 def init_db():
     Base.metadata.create_all(bind=engine)
@@ -24,6 +24,9 @@ def create_app() -> Flask:
 
     app.register_blueprint(public_bp)
     app.register_blueprint(admin_bp)
+
+    if os.environ.get("AUTO_CREATE_TABLES") == "1":
+        init_db()
 
     return app
 
