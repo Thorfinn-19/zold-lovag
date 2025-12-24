@@ -1,7 +1,8 @@
-#models.py
+# app/models.py
 from __future__ import annotations
 
 from datetime import datetime
+
 from sqlalchemy import (
     CheckConstraint,
     Column,
@@ -9,7 +10,7 @@ from sqlalchemy import (
     DECIMAL,
     ForeignKey,
     Integer,
-    NVARCHAR,
+    String,
     Text,
 )
 from sqlalchemy.orm import declarative_base, relationship
@@ -21,14 +22,14 @@ class Adminisztrator(Base):
     __tablename__ = "Adminisztrator"
 
     adminID = Column(Integer, primary_key=True, autoincrement=True)
-    nev = Column(NVARCHAR(100), nullable=False)
-    jelszo_hash = Column(NVARCHAR(255), nullable=False)
-    fiok_allapot = Column(NVARCHAR(15), nullable=False)
+    nev = Column(String(100), nullable=False)
+    jelszo_hash = Column(String(255), nullable=False)
+    fiok_allapot = Column(String(15), nullable=False)
     hiba_probalkozasok = Column(Integer, nullable=False, default=0)
 
     __table_args__ = (
         CheckConstraint(
-            "fiok_allapot IN (N'nyitott', N'zárolt')",
+            "fiok_allapot IN ('nyitott', 'zárolt')",
             name="CK_Adminisztrator_fiok_allapot",
         ),
     )
@@ -42,25 +43,25 @@ class Bejelentes(Base):
     bejelentesID = Column(Integer, primary_key=True, autoincrement=True)
     datum_ido = Column(DateTime, nullable=False, default=datetime.utcnow)
 
-    cim = Column(NVARCHAR(255), nullable=True)
+    cim = Column(String(255), nullable=True)
     koord_szel = Column(DECIMAL(9, 6), nullable=True)
     koord_hossz = Column(DECIMAL(9, 6), nullable=True)
 
-    leiras = Column(Text, nullable=True)              # NVARCHAR(MAX)
-    foto_url = Column(NVARCHAR(500), nullable=True)
+    leiras = Column(Text, nullable=True)
+    foto_url = Column(String(500), nullable=True)
 
-    statusz = Column(NVARCHAR(15), nullable=False, default="beérkezett")
-    prioritas = Column(NVARCHAR(15), nullable=True)
-    hulladek_tipus = Column(NVARCHAR(50), nullable=True)
-    mennyiseg = Column(NVARCHAR(200), nullable=True)
+    statusz = Column(String(15), nullable=False, default="beérkezett")
+    prioritas = Column(String(15), nullable=True)
+    hulladek_tipus = Column(String(50), nullable=True)
+    mennyiseg = Column(String(200), nullable=True)
 
     __table_args__ = (
         CheckConstraint(
-            "statusz IN (N'beérkezett', N'folyamatban', N'lezárt')",
+            "statusz IN ('beérkezett', 'folyamatban', 'lezárt')",
             name="CK_Bejelentes_statusz",
         ),
         CheckConstraint(
-            "(prioritas IS NULL) OR (prioritas IN (N'alacsony', N'közepes', N'magas'))",
+            "(prioritas IS NULL) OR (prioritas IN ('alacsony', 'közepes', 'magas'))",
             name="CK_Bejelentes_prioritas",
         ),
         CheckConstraint(
@@ -90,13 +91,13 @@ class Modositas(Base):
 
     datum_ido = Column(DateTime, nullable=False, default=datetime.utcnow)
 
-    mezo = Column(NVARCHAR(20), nullable=False)
-    regi_ertek = Column(NVARCHAR(200), nullable=True)
-    uj_ertek = Column(NVARCHAR(200), nullable=False)
+    mezo = Column(String(20), nullable=False)
+    regi_ertek = Column(String(200), nullable=True)
+    uj_ertek = Column(String(200), nullable=False)
 
     __table_args__ = (
         CheckConstraint(
-            "mezo IN (N'státusz', N'prioritás', N'hulladék tipus', N'mennyiség')",
+            "mezo IN ('státusz', 'prioritás', 'hulladék tipus', 'mennyiség')",
             name="CK_Modositas_mezo",
         ),
     )
